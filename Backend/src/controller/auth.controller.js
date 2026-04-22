@@ -1,6 +1,6 @@
 import userModel from "../models/user.model.js"
 import jwt from "jsonwebtoken";
-import { sendEmail } from "../services/mail.service.js";
+// import { sendEmail } from "../services/mail.service.js";
 
 
 /**
@@ -83,17 +83,7 @@ export async function login(req, res) {
             err: "User not Found"
         })
     }
-    // const isPasswordMatch = await user.comparePassword(password);
-
-
-    // if(!isPasswordMatch){
-    //     return res.status(400).json({
-    //         message: "Invalid email or password",
-    //         success: false,
-    //         err:"Incorrect Password"
-
-    //     })
-    // }
+   
 
     const isPasswordMatch = await user.comparePassword(password);
 
