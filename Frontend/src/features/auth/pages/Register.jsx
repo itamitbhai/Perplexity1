@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router'
+import { register } from '../services/auth.api'
 
 const Register = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const submitForm = (event) => {
+  const submitForm = async(event) => {
     event.preventDefault()
 
     const payload = {
@@ -16,7 +17,16 @@ const Register = () => {
     }
 
     console.log('Register payload:', payload)
+
+      try {
+    const data = await register(payload)   // 🔥 API CALL
+    console.log("SUCCESS:", data)
+
+  } catch (error) {
+    console.log("ERROR:", error.response?.data)
   }
+  }
+
 
   return (
     <section className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100 sm:px-6 lg:px-8">
