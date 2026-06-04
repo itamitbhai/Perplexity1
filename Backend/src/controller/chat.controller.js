@@ -18,10 +18,7 @@ export async function sendMessage(req, res) {
         })
     }
 
-    const messages = await messageModel.findOne({ chat: chatId})
 
-
-    const result = await generateResponse(messages)
 
     // const title = await generateChatTitle(message);
 
@@ -36,7 +33,10 @@ export async function sendMessage(req, res) {
         role: "user"
     });
 
+    const messages = await messageModel.find({ chat: chatId || chat._id})
 
+
+    const result = await generateResponse(messages)
 
 
 

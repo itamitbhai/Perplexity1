@@ -12,7 +12,8 @@ const mistralModel = new ChatMistralAI({
     apiKey: process.env.MISTRAL_API_KEY
 })
 
-export async function generateResponse(messages) {
+export async function generateResponse(messages = []) {
+
     
     const response = await geminiModel.invoke(messages.map(msg=>{
         if(msg.role == "user")
