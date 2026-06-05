@@ -6,7 +6,12 @@ const api = axios.create({
 })
 
 export const sendMessage = async ({ message, chatId }) => {
-    const response = await api.post("/api/chats/message", {message, chatId})
+    const response = await api.post("/api/chats/message", {message, chat: chatId})
+    return response.data
+}
+
+export const getChats = async () => {
+    const response = await api.get("/api/chats")
     return response.data
 }
 
@@ -15,10 +20,6 @@ export const getMessages = async (chatId) => {
     return response.data
 }
 
-export const getChats = async () => {
-    const response = await api.get("/api/chats")
-    return response.data
-}
 
 export const deleteChat = async (chatId) => {
     const response = await api.delete(`/api/chats/delete/${chatId}`)
