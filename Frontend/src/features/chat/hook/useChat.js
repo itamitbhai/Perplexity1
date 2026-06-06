@@ -37,7 +37,7 @@ export const useChat = () => {
             acc[ chat._id ] = {
                 id: chat._id,
                 title: chat.title,
-                message: [],
+                messages: [],
                 lastUpdated: chat.updatedAt,
             }
             return acc
@@ -46,24 +46,30 @@ export const useChat = () => {
         
     }
 
+  
     async function handleOpenChat(chatId, chats) {
-        console.log(chats[ chatId ]?.messages.length)
-        if(chats[ chatId ]?.messages.length === 0){
-           const data = await getMessages(chatId)
-           const { messages } = data
+        const messages = chats?.[chatId]?.messages ?? [];
 
-           const formattedMessages = messages.map(msg => ({
-            content: msg.content,
-            role: msg.role,
-          }))
-        
-          dispatch(addMessages({
-            chatId,
-           messages: formattedMessages,
-          }))
-        }
-        dispatch(setCurrentChatId(chatId))
-    }
+       console.log("chatId:", chatId);
+       console.log("messages:", messages);
+     
+       if (messages.length === 0) {
+         const data = await getMessages(chatId);
+     
+         const formattedMessages = data.messages.map(msg => ({
+           content: msg.content,
+           role: msg.role,
+         }));
+     
+         dispatch(
+           addMessages({
+             chatId,
+        messages: formattedMessages,
+      })
+     )}
+
+     dispatch(setCurrentChatId(chatId));
+}
 
     return {
         initializeSocketConnection,

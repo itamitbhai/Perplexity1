@@ -29,7 +29,7 @@ const Dashboard = () => {
   }
 
   const openChat = (chatId) => {
-    chat.handleOpenChat(chatId,chats)
+    chat.handleOpenChat(chatId, chats)
   }
 
   return (
