@@ -43,7 +43,7 @@ export async function register(req, res) {
 
     <p>Please verify your email address by clicking the link below:</p>
 
-    <a href="http://localhost:3000/api/auth/verify-email?token=${emailVerificationToken}">
+    <a href="http://localhost:8000/api/auth/verify-email?token=${emailVerificationToken}">
       Verify Email
     </a>
 
@@ -178,7 +178,7 @@ export async function VerifyEmail(req, res) {
     `
     <h1>Email Verified successfully</h1>
     <p>Your Email has been verified. you can now log in to your account.</p>
-    <a href="http://localhost:3000/login">GO TO LOGIN</a>
+    <a href="http://localhost:5173/login">GO TO LOGIN</a>
 
     
     `

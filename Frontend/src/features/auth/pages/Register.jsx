@@ -6,9 +6,11 @@ const Register = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   const submitForm = async(event) => {
     event.preventDefault()
+    setErrorMessage('')
 
     const payload = {
       username,
@@ -16,15 +18,17 @@ const Register = () => {
       password,
     }
 
-    console.log('Register payload:', payload)
+    try {
+      const data = await register(payload)
+      console.log("SUCCESS:", data)
 
-      try {
-    const data = await register(payload)   // 🔥 API CALL
-    console.log("SUCCESS:", data)
-
-  } catch (error) {
-    console.log("ERROR:", error.response?.data)
-  }
+    } catch (error) {
+      const responseData = error.response?.data
+      const message = responseData?.errors?.map((err) => err.msg).join(', ')
+        || responseData?.message
+        || 'Registration failed. Please try again.'
+      setErrorMessage(message)
+    }
   }
 
 
@@ -38,6 +42,12 @@ const Register = () => {
           <p className="mt-2 text-sm text-zinc-300">
             Register with your username, email, and password.
           </p>
+
+          {errorMessage && (
+            <div className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {errorMessage}
+            </div>
+          )}
 
           <form onSubmit={submitForm} className="mt-8 space-y-5">
             <div>
