@@ -18,7 +18,7 @@ app.use(morgan("dev"));
 app.use(cors({
     origin: allowedOrigins,
     credentials:true,
-    methods: ["GET", "POST", "PUSH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
 }))
 
 app.get("/", (req, res) => {
