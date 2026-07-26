@@ -7,12 +7,16 @@ import cors from "cors";
 
 const app = express()
 
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim());
+
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials:true,
     methods: ["GET", "POST", "PUSH", "DELETE"],
 }))
