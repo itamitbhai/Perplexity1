@@ -35,11 +35,11 @@ export async function register(req, res) {
 
    await sendEmail({
   to: email,
-  subject: "Welcome to Perplexity!",
+  subject: "Welcome to DeepOcean!",
   html: `
     <p>Hi ${username},</p>
 
-    <p>Thank you for registering at <strong>Perplexity</strong>. We're excited to have you on board!</p>
+    <p>Thank you for registering at <strong>DeepOcean</strong>. We're excited to have you on board!</p>
 
     <p>Please verify your email address by clicking the link below:</p>
 
@@ -49,7 +49,7 @@ export async function register(req, res) {
 
     <p>If you did not create an account, please ignore this email.</p>
 
-    <p>Best regards,<br><b>The Perplexity Team</b></p>
+    <p>Best regards,<br><b>The DeepOcean Team</b></p>
   `
 });
 
@@ -130,6 +130,22 @@ export async function login(req, res) {
  * @route Post/api/auth/getMe
  * @access private 
  */
+
+
+/**
+ * @desc log out the current user by clearing the auth cookie
+ * @route Post/api/auth/logout
+ * @access private
+ */
+
+export async function logout(req, res) {
+    res.clearCookie("token");
+
+    res.status(200).json({
+        message: "Logged out successfully",
+        success: true
+    })
+}
 
 
 export async function getMe(req, res) {

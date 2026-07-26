@@ -6,37 +6,58 @@ export async function sendMessage(req, res) {
 
     const { message, chat: chatId } = req.body;
 
+    let chat = null;
 
-    let title = null, chat = null;
+    if (chatId) {
+        chat = await chatModel.findOne({ _id: chatId, user: req.user.id })
 
-    if (!chatId) {
-        title = await generateChatTitle(message);
+        if (!chat) {
+            return res.status(404).json({
+                message: "Chat not found"
+            })
+        }
+    } else {
+        let title;
+        try {
+            title = await generateChatTitle(message);
+        } catch (error) {
+            console.error("generateChatTitle failed, falling back to default title:", error.message);
+        }
         chat = await chatModel.create({
             user: req.user.id,
-            title
+            ...(title && { title })
         })
     }
 
     const userMessage = await messageModel.create({
-        chat: chatId || chat._id,
+        chat: chat._id,
         content: message,
         role: "user"
     })
 
-    const messages = await messageModel.find({ chat: chatId || chat._id })
+    const messages = await messageModel.find({ chat: chat._id })
 
-    const result = await generateResponse(messages);
+    let result;
+    try {
+        result = await generateResponse(messages);
+    } catch (error) {
+        console.error("generateResponse failed:", error.message);
+        return res.status(502).json({
+            message: "The AI service is temporarily unavailable. Please try again in a moment.",
+            chat,
+            userMessage
+        })
+    }
 
     const aiMessage = await messageModel.create({
-        chat: chatId || chat._id,
+        chat: chat._id,
         content: result,
         role: "ai"
     })
 
-
     res.status(201).json({
-        title,
         chat,
+        userMessage,
         aiMessage
     })
 

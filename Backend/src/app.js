@@ -25,5 +25,17 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/chats", chatRouter);
 
+app.use((req, res) => {
+    res.status(404).json({
+        message: "Route not found"
+    });
+});
+
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(err.status || 500).json({
+        message: "Something went wrong. Please try again."
+    });
+});
 
 export default app;

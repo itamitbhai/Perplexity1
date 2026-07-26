@@ -1,16 +1,20 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router'
 import { register } from '../services/auth.api'
+import Logo from '../../../components/Logo'
 
 const Register = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const submitForm = async(event) => {
     event.preventDefault()
     setErrorMessage('')
+    setSuccessMessage('')
 
     const payload = {
       username,
@@ -18,16 +22,21 @@ const Register = () => {
       password,
     }
 
+    setIsSubmitting(true)
     try {
-      const data = await register(payload)
-      console.log("SUCCESS:", data)
-
+      await register(payload)
+      setSuccessMessage('Account created! Check your email to verify your account, then log in.')
+      setUsername('')
+      setEmail('')
+      setPassword('')
     } catch (error) {
       const responseData = error.response?.data
       const message = responseData?.errors?.map((err) => err.msg).join(', ')
         || responseData?.message
         || 'Registration failed. Please try again.'
       setErrorMessage(message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -35,7 +44,11 @@ const Register = () => {
   return (
     <section className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100 sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[85vh] w-full max-w-5xl items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl border border-[#31b8c6]/40 bg-zinc-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur">
+        <div className="w-full max-w-md rounded-2xl border border-[#31b8c6]/40 bg-zinc-900/70 p-6 shadow-2xl shadow-black/50 backdrop-blur sm:p-8">
+          <div className="mb-6 flex items-center gap-3">
+            <Logo size={40} />
+            <span className="text-xl font-semibold tracking-tight text-white">DeepOcean</span>
+          </div>
           <h1 className="text-3xl font-bold text-[#31b8c6]">
             Create Account
           </h1>
@@ -46,6 +59,12 @@ const Register = () => {
           {errorMessage && (
             <div className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {errorMessage}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mt-6 rounded-lg border border-[#31b8c6]/40 bg-[#31b8c6]/10 px-4 py-3 text-sm text-[#5fd3df]">
+              {successMessage}
             </div>
           )}
 
@@ -97,9 +116,10 @@ const Register = () => {
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-[#31b8c6] px-4 py-3 font-semibold text-zinc-950 transition hover:bg-[#45c7d4] focus:outline-none focus:shadow-[0_0_0_3px_rgba(49,184,198,0.35)]"
+              disabled={isSubmitting}
+              className="w-full rounded-lg bg-[#31b8c6] px-4 py-3 font-semibold text-zinc-950 transition hover:bg-[#45c7d4] focus:outline-none focus:shadow-[0_0_0_3px_rgba(49,184,198,0.35)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Register
+              {isSubmitting ? 'Creating account...' : 'Register'}
             </button>
           </form>
 
