@@ -6,6 +6,9 @@ import { sendEmail } from "../services/mail.service.js";
 // so we use that as a fallback to avoid falling back to dev cookie settings when deployed.
 const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 
+const BACKEND_URL = (process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8000}`).trim().replace(/\/+$/, "");
+const FRONTEND_URL = (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim().replace(/\/+$/, "");
+
 
 /**
  * @desc register user and return jwt token
@@ -37,17 +40,19 @@ export async function register(req, res) {
         email: user.email,
     }, process.env.JWT_SECRET)
 
-   await sendEmail({
-  to: email,
-  subject: "Welcome to DeepOcean!",
-  html: `
+    let emailSent = true;
+    try {
+        await sendEmail({
+            to: email,
+            subject: "Welcome to DeepOcean!",
+            html: `
     <p>Hi ${username},</p>
 
     <p>Thank you for registering at <strong>DeepOcean</strong>. We're excited to have you on board!</p>
 
     <p>Please verify your email address by clicking the link below:</p>
 
-    <a href="http://localhost:8000/api/auth/verify-email?token=${emailVerificationToken}">
+    <a href="${BACKEND_URL}/api/auth/verify-email?token=${emailVerificationToken}">
       Verify Email
     </a>
 
@@ -55,10 +60,16 @@ export async function register(req, res) {
 
     <p>Best regards,<br><b>The DeepOcean Team</b></p>
   `
-});
+        });
+    } catch (err) {
+        emailSent = false;
+        console.error("Failed to send verification email:", err);
+    }
 
     res.status(201).json({
-        message:"User registered successfully",
+        message: emailSent
+            ? "User registered successfully"
+            : "User registered successfully, but the verification email could not be sent. Please contact support.",
         success: true,
         user: {
             id: user._id,
@@ -187,7 +198,12 @@ export async function getMe(req, res) {
 export async function VerifyEmail(req, res) {
     const { token } = req.query;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+        return res.status(400).send("This verification link is invalid or has expired. Please request a new one.");
+    }
 
     const user = await userModel.findOne({ email: decoded.email});
 
@@ -203,13 +219,13 @@ export async function VerifyEmail(req, res) {
 
     await user.save();
 
-    const html = 
+    const html =
     `
     <h1>Email Verified successfully</h1>
     <p>Your Email has been verified. you can now log in to your account.</p>
-    <a href="http://localhost:5173/login">GO TO LOGIN</a>
+    <a href="${FRONTEND_URL}/login">GO TO LOGIN</a>
 
-    
+
     `
 
     res.send(html);
