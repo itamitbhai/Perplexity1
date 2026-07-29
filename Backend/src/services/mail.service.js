@@ -1,34 +1,36 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        type: 'OAuth2',
-        user: process.env.GOOGLE_USER,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-        clientId: process.env.GOOGLE_CLIENT_ID
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-})
+// Render blocks outbound SMTP (port 25/465/587), so email is sent over
+// Resend's HTTPS API instead of Nodemailer's SMTP transport.
+//
+// Built lazily (not at module load) so a missing RESEND_API_KEY only fails
+// the send itself instead of crashing the whole server on boot - the Resend
+// SDK throws synchronously in its constructor if the key is empty.
+let resend;
+function getClient() {
+    if (!resend) {
+        if (!process.env.RESEND_API_KEY) {
+            throw new Error("RESEND_API_KEY is not set");
+        }
+        resend = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resend;
+}
 
-transporter.verify()
-    .then(() => { console.log("Email transporter is ready to send emails"); })
-    .catch((err) => { console.error("Email transporter verification failed:", err); });
-
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "DeepOcean <onboarding@resend.dev>";
 
 export async function sendEmail({ to, subject, html, text }) {
-
-    const mailOptions = {
-        from: process.env.GOOGLE_USER,
+    const { data, error } = await getClient().emails.send({
+        from: FROM_EMAIL,
         to,
         subject,
         html,
-        text
-    };
+        text,
+    });
 
-    const details = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", details);
+    if (error) {
+        throw new Error(`Resend failed to send email: ${error.message || JSON.stringify(error)}`);
+    }
+
+    console.log("Email sent:", data?.id);
 }
