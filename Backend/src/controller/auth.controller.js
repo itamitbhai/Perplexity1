@@ -2,6 +2,10 @@ import userModel from "../models/user.model.js"
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
 
+// Render doesn't set NODE_ENV=production automatically, but it does always set RENDER=true,
+// so we use that as a fallback to avoid falling back to dev cookie settings when deployed.
+const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
+
 
 /**
  * @desc register user and return jwt token
@@ -111,8 +115,8 @@ export async function login(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
     })
 
@@ -146,8 +150,8 @@ export async function login(req, res) {
 export async function logout(req, res) {
     res.clearCookie("token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
     });
 
     res.status(200).json({

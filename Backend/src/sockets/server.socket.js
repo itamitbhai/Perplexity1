@@ -5,7 +5,7 @@ let io;
 export function initSocket(httpServer) {
     const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
         .split(",")
-        .map((origin) => origin.trim());
+        .map((origin) => origin.trim().replace(/\/+$/, ""));
 
     io = new Server(httpServer, {
         cors:{
