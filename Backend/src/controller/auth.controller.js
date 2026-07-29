@@ -40,12 +40,13 @@ export async function register(req, res) {
         email: user.email,
     }, process.env.JWT_SECRET)
 
-    let emailSent = true;
-    try {
-        await sendEmail({
-            to: email,
-            subject: "Welcome to DeepOcean!",
-            html: `
+    // Fire-and-forget: don't make the client wait on Gmail's SMTP handshake.
+    // The transporter has its own connect/greeting/socket timeouts, so this
+    // will never hang the process even if it eventually fails.
+    sendEmail({
+        to: email,
+        subject: "Welcome to DeepOcean!",
+        html: `
     <p>Hi ${username},</p>
 
     <p>Thank you for registering at <strong>DeepOcean</strong>. We're excited to have you on board!</p>
@@ -60,16 +61,12 @@ export async function register(req, res) {
 
     <p>Best regards,<br><b>The DeepOcean Team</b></p>
   `
-        });
-    } catch (err) {
-        emailSent = false;
+    }).catch((err) => {
         console.error("Failed to send verification email:", err);
-    }
+    });
 
     res.status(201).json({
-        message: emailSent
-            ? "User registered successfully"
-            : "User registered successfully, but the verification email could not be sent. Please contact support.",
+        message: "User registered successfully. Check your email to verify your account.",
         success: true,
         user: {
             id: user._id,
