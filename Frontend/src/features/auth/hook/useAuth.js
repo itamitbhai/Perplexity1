@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 import { register, login, getMe, logout } from "../services/auth.api";
 import { setUser, setLoading, setError } from "../auth.slice";
+import { getToken, setToken, clearToken } from "../../../lib/api";
 
 
 export function useAuth() {
@@ -24,6 +25,7 @@ export function useAuth() {
             dispatch(setLoading(true))
             dispatch(setError(null))
             const data = await login({ email, password })
+            setToken(data.token)
             dispatch(setUser(data.user))
         } catch (err) {
             dispatch(setError(err.response?.data?.message || "Login failed"))
@@ -34,12 +36,19 @@ export function useAuth() {
     }
 
     async function handleGetMe() {
+        if (!getToken()) {
+            dispatch(setUser(null))
+            dispatch(setLoading(false))
+            return
+        }
+
         try {
             dispatch(setLoading(true))
             const data = await getMe()
             dispatch(setUser(data.user))
         } catch {
-            // a failed session check just means "not logged in" - not a user-facing error
+            // stored token is missing/expired/invalid - treat as logged out
+            clearToken()
             dispatch(setUser(null))
         } finally {
             dispatch(setLoading(false))
@@ -52,6 +61,7 @@ export function useAuth() {
         } catch {
             // clear local session even if the server request fails
         } finally {
+            clearToken()
             dispatch(setUser(null))
         }
     }

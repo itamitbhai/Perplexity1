@@ -1,5 +1,4 @@
 import express from "express";
-import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import morgan from "morgan";
@@ -13,11 +12,9 @@ const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
-app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(cors({
     origin: allowedOrigins,
-    credentials:true,
     methods: ["GET", "POST", "PUT", "DELETE"],
 }))
 

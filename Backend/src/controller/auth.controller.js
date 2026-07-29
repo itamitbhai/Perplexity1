@@ -2,10 +2,6 @@ import userModel from "../models/user.model.js"
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
 
-// Render doesn't set NODE_ENV=production automatically, but it does always set RENDER=true,
-// so we use that as a fallback to avoid falling back to dev cookie settings when deployed.
-const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
-
 const BACKEND_URL = (process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8000}`).trim().replace(/\/+$/, "");
 const FRONTEND_URL = (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim().replace(/\/+$/, "");
 
@@ -121,17 +117,10 @@ export async function login(req, res) {
 
     }, process.env.JWT_SECRET, {expiresIn: "7d"})
 
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-
     res.status(200).json({
         message: "Login Successful",
         success: true,
-
+        token,
         user: {
             id: user._id,
             username:user.username,
@@ -145,23 +134,17 @@ export async function login(req, res) {
 /**
  * @desc getme user and return jwt token
  * @route Post/api/auth/getMe
- * @access private 
+ * @access private
  */
 
 
 /**
- * @desc log out the current user by clearing the auth cookie
+ * @desc log out the current user (stateless JWT - client just discards the token)
  * @route Post/api/auth/logout
  * @access private
  */
 
 export async function logout(req, res) {
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-    });
-
     res.status(200).json({
         message: "Logged out successfully",
         success: true
