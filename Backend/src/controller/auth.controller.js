@@ -5,6 +5,11 @@ import { sendEmail } from "../services/mail.service.js";
 const BACKEND_URL = (process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8000}`).trim().replace(/\/+$/, "");
 const FRONTEND_URL = (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim().replace(/\/+$/, "");
 
+// Resend can only deliver to arbitrary recipients once a domain is verified.
+// Until then, deployed environments skip the verification gate so real users
+// aren't locked out by an email that will never arrive.
+const REQUIRE_EMAIL_VERIFICATION = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
 
 /**
  * @desc register user and return jwt token
@@ -30,19 +35,30 @@ export async function register(req, res) {
 
     }
 
-    const user = await userModel.create({username, email, password })
+    const user = await userModel.create({
+        username,
+        email,
+        password,
+        // No verified Resend domain yet, so we can't email arbitrary
+        // recipients outside of localhost - see REQUIRE_EMAIL_VERIFICATION.
+        verified: !REQUIRE_EMAIL_VERIFICATION,
+    })
 
-    const emailVerificationToken = jwt.sign({
-        email: user.email,
-    }, process.env.JWT_SECRET)
+    let emailSent = false;
 
-    // Fire-and-forget: don't make the client wait on Gmail's SMTP handshake.
-    // The transporter has its own connect/greeting/socket timeouts, so this
-    // will never hang the process even if it eventually fails.
-    sendEmail({
-        to: email,
-        subject: "Welcome to DeepOcean!",
-        html: `
+    if (REQUIRE_EMAIL_VERIFICATION) {
+        const emailVerificationToken = jwt.sign({
+            email: user.email,
+        }, process.env.JWT_SECRET)
+
+        // Awaited (not fire-and-forget): Resend is an HTTPS API call, not an SMTP
+        // handshake, so this is fast enough to confirm before responding - and the
+        // client needs to know if the verification mail actually went out.
+        try {
+            await sendEmail({
+                to: email,
+                subject: "Welcome to DeepOcean!",
+                html: `
     <p>Hi ${username},</p>
 
     <p>Thank you for registering at <strong>DeepOcean</strong>. We're excited to have you on board!</p>
@@ -57,13 +73,21 @@ export async function register(req, res) {
 
     <p>Best regards,<br><b>The DeepOcean Team</b></p>
   `
-    }).catch((err) => {
-        console.error("Failed to send verification email:", err);
-    });
+            });
+            emailSent = true;
+        } catch (err) {
+            console.error("Failed to send verification email:", err);
+        }
+    }
 
     res.status(201).json({
-        message: "User registered successfully. Check your email to verify your account.",
+        message: !REQUIRE_EMAIL_VERIFICATION
+            ? "User registered successfully."
+            : emailSent
+                ? "User registered successfully. Check your email to verify your account."
+                : "User registered successfully, but the verification email could not be sent. Please contact support.",
         success: true,
+        emailSent,
         user: {
             id: user._id,
             username: user.username,
@@ -103,7 +127,7 @@ export async function login(req, res) {
         })
     }
 
-    if(!user.verified){
+    if(REQUIRE_EMAIL_VERIFICATION && !user.verified){
         return res.status(400).json({
             message: "Please verify your email before logging in ",
             success: false,
